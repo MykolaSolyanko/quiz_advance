@@ -17,14 +17,31 @@ class GrandChild: public Child {
 
 ```
 
-2. Ниже выберите вариант, почему параметром копируещего конструктора должна быть ссылка?
-```
-a. Потому что передавать константную ссылку намного эфективней чем копию;
-b. Потому что ссылка может быть изменена вызываемым конструктором;
-c. Потому что копия будет вызывать копирующий конструтор рекурсивно;
-d. Потому что класс не может содержать указателя на свой тип, он должен использовать ссылку;
-```
+2. Что будет выведенно на экране?
+```cpp
 
+#include <iostream>
+
+int y (int& x) {return 1;}
+int y (int&& x) {return 2;}
+
+template<typename T>
+int func1(T&& x) { return y(x);}
+
+template<typename T>
+int func2(T&& x) { return y(std::move(x));}
+
+template<typename T>
+int func3(T&& x) { return y(std::forward<T>(x));}
+
+int main(int argc, char const *argv[]) {
+    int i = 10;
+    std::cout << func1(i) << func1(20) << std::endl;
+    std::cout << func2(i) << func2(30) << std::endl;
+    std::cout << func3(i) << func3(40) << std::endl;
+    return 0;
+}
+```
 3. Почему важно явно определять конструктор копирования или оператор присвоения когда класс содержит ресурс, например указатель на динамическую память?
 ```
 a. Потому что дефолтный копирующий конструктор и оператор присвоения только копируют значение указетелей.
@@ -85,7 +102,34 @@ d) Это будет работать `t.i = 42, t.b = true, t.s="test"`
 e) Это будет работать, `t` останеться в валидном unspecified состоянии `t.i = 42, t.b = true, t.s=""`
 ```
 
-7. Что будет выведенно на экран
+7. Будет ли в классе `Debug` генерироваться перемещающие операции? И что будет выведено на экран?
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <iterator>
+
+class Debug {
+  public:
+    Debug() = default;
+    ~Debug() = default;
+    Debug(const Debug& ) = default;
+    Debug& operator=(const Debug&) = default;
+    bool is_vector_empty() {return v.empty(); }
+  private:
+   std::vector<int> v{1, 2, 3, 4, 5}; 
+};
+
+int main() {
+  Debug d1;
+  std::cout << d1.is_vector_empty();
+  Debug d2{std::move(d1)};
+  std::cout << d1.is_vector_empty();
+  return 0;
+}
+```
+
+8. Что будет выведенно на экран
 ```cpp
 #include <iostream>
 #include <functional>
@@ -132,7 +176,7 @@ int main() {
 }
 ```
 
-8. Что являеться правильным для std::move по отношении к классу A?
+9. Что являеться правильным для std::move по отношении к классу A?
 ```
 a) Будет ошибка компиляции если в классе А нет дефолтного конструктора.
 b) Будет ошибка времени выполнения если класс А не поддерживает семантику перемещения.
@@ -141,9 +185,9 @@ d) std::move будет только перемещать члены класс�
 e) std::move это только оператор приведения типа.
 ```
 
-9. Опишите ситуацию когда и зачем зарещают семантику копирования для класса? Напишите класс (только сигнатуры без реализации) в котором запрещено копирование, а разрешаеться только перемещать.
+10. Опишите ситуацию когда и зачем зарещают семантику копирования для класса? Напишите класс (только сигнатуры без реализации) в котором запрещено копирование, а разрешаеться только перемещать.
 
-10. Что нужно сделать чтобы следующий код компилировался?
+11. Что нужно сделать чтобы следующий код компилировался?
 ```cpp
 typedef void (*Callback)(int sum);
 void CalcSumAsync(int a, int b, Callback c) {
@@ -160,7 +204,7 @@ int main() {
 }
 ```
 
-11. Что в этом коде не так? и напишите как исправить
+12. Что в этом коде не так? и напишите как исправить
 ```cpp
 #include <iostream>
 #include <exception>
@@ -194,7 +238,7 @@ int main() {
 }
 ```
 
-12. Будет ли в следующем фрагменте кода происходить `stack unwinding`, если да то что будет выведенно на экран, если нет то что нужно исправить чтобы он происходил
+13. Будет ли в следующем фрагменте кода происходить `stack unwinding`, если да то что будет выведенно на экран, если нет то что нужно исправить чтобы он происходил
 ```cpp
 
 #include <iostream>
@@ -228,7 +272,7 @@ int main() {
 }
 ```
 
-13. Что будет выведенно на экране
+14. Что будет выведенно на экране
 ```cpp
 
 #include <iostream>
@@ -265,7 +309,7 @@ int main() {
 }
 ```
 
-14. Что будет выведено на экране?
+15. Что будет выведено на экране?
 ```cpp
 #include <iostream>
 #include <exception>
@@ -299,9 +343,76 @@ int main() {
 }
 ```
 
-15. Что произойдет если деструктор класса `A` бросает исключение, и мы его не хендлим в этом же деструкторе, а например добавляем блок `catch` в функции или методе который создает обьект класса `A`?
+16. Что произойдет если деструктор класса `A` бросает исключение, и мы его не хендлим в этом же деструкторе, а например добавляем блок `catch` в функции или методе который создает обьект класса `A`?
 
-16. Что выводит на экран следующий код?
+17. Что будет выведенно на экран?
+```cpp
+#include <iostream>
+#include <exception>
+
+int x {0};
+
+class A {
+  public:
+    A() {
+      std::cout << "a";
+      if (x++ == 0) {
+        throw std::exception{};
+      }
+    }
+    ~A() {std::cout << "~A";}
+};
+
+class B {
+  public:
+   B() {
+     std::cout << "b";
+   }
+
+   ~B() {
+     std::cout << "B";
+   }
+   A a;
+};
+
+void call_some_code() {static B b;}
+int main() {
+  try {
+    call_some_code();
+  } catch (std::exception& ) {
+      std::cout << "c";
+      call_some_code();
+  }
+  return 0;
+}
+```
+
+18. Что выводит на экран следующий код?
+```cpp
+#include <iostream>
+#include <exception>
+
+namespace x {
+  class C{};
+  void call(C& c) {
+    std::cout << "1";
+  }
+}
+
+namespace y {
+  void call(x::C& c) {
+    std::cout << "2";
+  }  
+}
+
+int main() {
+  x::C c;
+  call(c);
+  return 0;
+}
+```
+
+19. Что выводит на экран следующий код?
 ```cpp
 #include <iostream>
 #include <thread>
@@ -317,7 +428,7 @@ int main() {
 }
 ```
 
-17. Что будет выведено на экран?
+20. Что будет выведено на экран?
 ```cpp
 #include <iostream>
 #include <thread>
@@ -341,7 +452,7 @@ int main() {
 }
 ```
 
-18. Что будет выведенно на экран
+21. Что будет выведенно на экран
 ```cpp
 #include <exception>
 #include <future>
@@ -373,7 +484,7 @@ int main() {
 }
 ```
 
-19. Что будет выведенно на экран? и обьясните почему так?
+22. Что будет выведенно на экран? и обьясните почему так?
 ```cpp
 #include <iostream>
 #include <thread>
@@ -393,7 +504,7 @@ int main() {
 }
 ```
 
-20. Опишите все возможные проблемные ситуации кода ниже, и как бы вы их решили
+23. Опишите все возможные проблемные ситуации кода ниже, и как бы вы их решили
 ```cpp
 #include <iostream>
 #include <thread>
@@ -424,7 +535,7 @@ int main() {
 }
 ```
 
-21. Сработает ли `assert` в данном коде? Опишите ваш вариант ответа.
+24. Сработает ли `assert` в данном коде? Опишите ваш вариант ответа.
 ```cpp
 #include <iostream>
 #include <thread>
@@ -454,7 +565,92 @@ int main() {
 }
 ```
 
-22. Обьясните какие могут быть проблемы в этом коде?
+25. Как получить результат из потока запущенным объектом std::thread?
+
+26. Это потокобезопасный класс singleton? Если нет, то напишите реализацию, которая была бы потокобезопасная(singlton маэрса запрещен).
+```cpp
+class Singleton {
+  public:
+   static Singleton& getInstance() {
+     if (instance_) {
+        return instance_;
+     }
+
+     instance_ = new Singleton{};
+     return instance_;
+   }
+  private:
+    Singleton() = default;
+    Singleton(const Singleton&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+    static Singleton* instance_;
+};
+```
+
+27. Это потокобезопасный код? Если нет то что нужно добавить?
+```cpp
+#include <iostream>
+#include <memory>
+#include <atomic>
+#include <thread>
+#include <vector>
+#include <algorithm>
+#include <assert.h>
+
+class Events {
+  public:
+  Events() = default;
+  void StartProccessEvents() {
+    still_runing = true;
+    while(still_runing) {
+      ; // process events
+    }
+  }
+
+  void StopProccessEvents() {
+    still_runing = false;
+  }
+  private:
+    bool still_runing{};
+};
+
+class Client {
+    public:
+    Client() {
+        if (count_++ == 0) {
+          events_ = std::make_unique<Events>();
+          events_->StartProccessEvents();
+        }
+    }
+    ~Client() {
+        if (--count_ == 0) {
+          events_->StopProccessEvents();
+          events_ = nullptr;
+        }
+    }
+    Events* getEvents() {return events_.get();}
+  public:
+    static std::atomic<int> count_;
+    static std::unique_ptr<Events> events_;   
+};
+
+std::atomic<int> Client::count_{};
+std::unique_ptr<Events> Client::events_{};
+
+int main() {
+  std::unique_ptr<std::thread> th_[10];
+  std::transform(std::begin(th_), std::end(th_), std::begin(th_), [](std::unique_ptr<std::thread>& thread) {
+    return std::make_unique<std::thread>([]() {
+        Client cl;
+        assert(cl.getEvents() != nullptr);
+    });
+  });
+  std::for_each(std::begin(th_), std::end(th_), [](std::unique_ptr<std::thread>& thread) {thread->join();});
+  return 0;
+}
+```
+
+28. Обьясните какие могут быть проблемы в этом коде?
 ```cpp
 #include <iostream>
 #include <vector>
@@ -477,7 +673,7 @@ int main() {
 }
 ```
 
-23. Каким существующим алгоритмом с стандартной библиотеке(STL) можно заменить этот велосипед?
+29. Каким существующим алгоритмом с стандартной библиотеке(STL) можно заменить этот велосипед?
 ```cpp
 #include <iostream>
 #include <vector>
@@ -512,7 +708,140 @@ int main() {
 }
 ```
 
-24. Какие строчки подойдут для вставки в обозначенном месте, чтобы на экран вывело "12345" ? Множественный выбор, т.е. вариантов может быть несколько.
+30. Что выводит на экран следующий код?
+```cpp
+#include <iostream>
+#include <map>
+
+int main() {
+  std::map<bool, int> m1 {{1, 2}, {0, 4}, {3, 8}, {2, 4}};
+  std::cout << m1.size();
+  std::map<int, int> m2 {{1, 2}, {0, 4}, {3, 8}, {2, 4}};
+  std::cout << m2.size();
+  return 0;
+}
+```
+
+31. Что выводит на экран следующий код?
+```cpp
+#include <iostream>
+#include <array>
+
+
+int main() {
+  std::array<int, 4> arr1{1, 2, 3, 4};
+  std::array<int, 4> arr2;
+
+  arr1.swap(arr2);
+
+  std::cout << arr1.empty() << arr1.empty();
+  return 0;
+}
+```
+
+32. Скомпилируется ли код ниже? Если нет то почему?
+```cpp
+#include <iostream>
+#include <set>
+#include <algorithm>
+
+class data {
+  public:
+    constexpr data(int value) noexcept : payload{value} {}
+    void set_senssative_data(int new_sen_data) {user_sensative_info = new_sen_data;}
+    int get_payload() const {return payload;}
+  private:
+    int payload;
+    int user_sensative_info{0};
+};
+
+void set_for_user_data() {
+  auto comp = [](const data& lhs, const data& rhs) {return lhs.get_payload() < rhs.get_payload();};
+  std::set<data, decltype(comp)> s{comp};
+
+  s.emplace(10);
+  s.emplace(20);
+  s.emplace(1);
+  s.emplace(15);
+
+  data find_data{20};
+  auto finded_payload = s.find(find_data);
+  if (finded_payload != s.end()) {
+    finded_payload->set_senssative_data(10);
+  }
+}
+
+int main() {
+  set_for_user_data();
+  return 0;
+}
+```
+
+33. Ниже код рабочий, и имеет право на жизнь, но как бы вы его переписали(возможно изменить алгоритм или контейнер)?
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+int main() {
+  std::vector<int> data{1, 5, 2, 33, 15, 4, 100};
+
+  std::sort(data.begin(), data.end(), std::greater<int>());
+
+  auto max_element = data.front();
+  std::cout << max_element;
+
+  data.push_back(125);
+  std::sort(data.begin(), data.end(), std::greater<int>());
+
+  max_element = data.front();
+  std::cout << max_element;
+
+  return 0;
+}
+```
+
+34. Как бы вы переписали ниже код, применив например алгоритмы?
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <iterator>
+
+template <typename Cont, typename T, typename Func>
+void process_data(Cont &cont, T value, Func f) {
+  for (auto it = std::begin(cont); it != std::end(cont); ++it) {
+    if (*it == value) {
+      *it = f(*it, *it);
+    }
+  }
+}
+
+int main() {
+  std::vector<int> v{1, 2, 2, 10, 2, 8, 11, 2};
+  process_data(v, 2, std::multiplies<int>());
+  std::copy(v.begin(), v.end(), std::ostream_iterator<int>(std::cout, ":"));
+  return 0;
+}
+```
+
+35. Что будет выведенно на экран?
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <iterator>
+
+
+int main() {
+  std::vector<int> v{1, 2, 2, 10, 2, 8, 11, 2};
+  v.erase(std::unique(v.begin(), v.end()), v.end());
+  std::copy(v.begin(), v.end(), std::ostream_iterator<int>(std::cout, ":"));
+  return 0;
+}
+```
+
+36. Какие строчки подойдут для вставки в обозначенном месте, чтобы на экран вывело "12345" ? Множественный выбор, т.е. вариантов может быть несколько.
 ```cpp
 #include <iostream> 
 #include <algorithm> 
@@ -553,42 +882,4 @@ int main()
      std::sort(v.begin(), v.end()); 
      std::unique_copy(v.begin(), v.end(), std::ostream_iterator<int>(std::cout));
    ```
-
-26. Данный код являеться не коректным. Что будет выведенно на экране? и как сделать чтобы этот код был коректен
-```cpp
-#include <iostream>
-
-class Test {
-  public:
-    explicit Test(int size_) {
-      std::cout << "1" << std::endl;
-    }
-    Test(const Test& test) {
-      std::cout << "2" << std::endl;
-    }
-    Test(Test&& test) {
-      std::cout << "3" << std::endl;
-    }
-    Test& operator= (Test&& test) {
-      std::cout << "4" << std::endl;
-      return *this;
-    }
-    Test& operator= (const Test& test) {
-      std::cout << "5" << std::endl;
-      return *this;
-    }
-    ~Test() {
-      std::cout << "6" << std::endl;
-    }
-};
-
-Test process_data(size_t size_) {
-  Test data(size_);
-  return std::move(data);
-}
-
-int main() {
-  auto data = process_data(100);
-  return 0;
-}
-```
+  
